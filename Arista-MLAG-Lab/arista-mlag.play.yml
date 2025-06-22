@@ -1,0 +1,214 @@
+---
+
+- hosts: all
+  gather_facts: no
+  become: yes
+  become_method: enable
+
+  vars:
+    ansible_connection: network_cli
+    ansible_network_os: arista.eos.eos
+
+  tasks:
+  - name: backup config
+    arista.eos.eos_config:
+      backup: true
+
+- hosts: clab-Arista-MLAG-Lab01-mdf-sw01, clab-Arista-MLAG-Lab01-mdf-sw02, clab-Arista-MLAG-Lab01-idf-sw01, clab-Arista-MLAG-Lab01-idf-sw02
+  gather_facts: no
+  become: yes
+  become_method: enable
+
+  vars:
+    ansible_connection: network_cli
+    ansible_network_os: arista.eos.eos
+
+  tasks:
+  - name: Peer link port channel trunk
+    arista.eos.eos_l2_interfaces:
+      config:
+      - name: Port-Channel10
+        mode: trunk
+  - name: sw03 port channel trunk
+    arista.eos.eos_l2_interfaces:
+      config:
+      - name: Port-Channel100
+        mode: trunk
+  - name: Peer links
+    arista.eos.eos_lag_interfaces:
+      config:
+      - name: Port-Channel10
+        members:
+        - member: et7
+          mode: active
+        - member: et8
+          mode: active
+  - name: sw03 port channel
+    arista.eos.eos_lag_interfaces:
+      config:
+      - name: Port-Channel100
+        members:
+        - member: et10
+          mode: active
+  - name: MLAG vlan
+    arista.eos.eos_vlans:
+      config:
+      - vlan_id: 4094
+  - name: Disable spanning-tree for MLAG vlan
+    arista.eos.eos_config:
+      lines: no spanning-tree vlan-id 4094
+  - name: set vlan mlagpeer group
+    arista.eos.eos_config:
+      lines: trunk group mlagpeer
+      parents: vlan 4094
+  - name: set port channel mlagpeer group
+    arista.eos.eos_config:
+      lines: switchport trunk group mlagpeer
+      parents: interface Port-Channel10
+  - name: set sw03 port channel mlag
+    arista.eos.eos_config:
+      lines: mlag 100
+      parents: interface Port-Channel100
+
+- hosts: clab-Arista-MLAG-Lab01-mdf-sw01, clab-Arista-MLAG-Lab01-idf-sw01
+  gather_facts: no
+  become: yes
+  become_method: enable
+
+  vars:
+    ansible_connection: network_cli
+    ansible_network_os: arista.eos.eos
+
+  tasks:
+  - name: set mlag IP address
+    arista.eos.eos_l3_interfaces:
+      config:
+      - name: vlan 4094
+        ipv4:
+        - address: 10.0.0.1/30
+  - name: configure mlag
+    arista.eos.eos_config:
+      lines:
+      - local-interface vlan 4094
+      - peer-address 10.0.0.2
+      - peer-link port-channel 10
+      - domain-id mlag1
+      parents: mlag configuration
+
+- hosts: clab-Arista-MLAG-Lab01-mdf-sw02, clab-Arista-MLAG-Lab01-idf-sw02
+  gather_facts: no
+  become: yes
+  become_method: enable
+
+  vars:
+    ansible_connection: network_cli
+    ansible_network_os: arista.eos.eos
+
+  tasks:
+  - name: set mlag IP address
+    arista.eos.eos_l3_interfaces:
+      config:
+      - name: vlan 4094
+        ipv4:
+        - address: 10.0.0.2/30
+  - name: configure mlag
+    arista.eos.eos_config:
+      lines:
+      - local-interface vlan 4094
+      - peer-address 10.0.0.1
+      - peer-link port-channel 10
+      - domain-id mlag1
+      parents: mlag configuration
+
+- hosts: clab-Arista-MLAG-Lab01-mdf-sw03, clab-Arista-MLAG-Lab01-idf-sw03
+  gather_facts: no
+  become: yes
+  become_method: enable
+
+  vars:
+    ansible_connection: network_cli
+    ansible_network_os: arista.eos.eos
+
+  tasks:
+  - name: uplink port channel trunk
+    arista.eos.eos_l2_interfaces:
+      config:
+      - name: Port-Channel15
+        mode: trunk
+  - name: uplink port channel
+    arista.eos.eos_lag_interfaces:
+      config:
+      - name: Port-Channel15
+        members:
+        - member: et9
+          mode: active
+        - member: et10
+          mode: active
+
+- hosts: clab-Arista-MLAG-Lab01-mdf-sw01, clab-Arista-MLAG-Lab01-mdf-sw02
+  gather_facts: no
+  become: yes
+  become_method: enable
+
+  vars:
+    ansible_connection: network_cli
+    ansible_network_os: arista.eos.eos
+
+  tasks:
+  - name: idf port channel trunk
+    arista.eos.eos_l2_interfaces:
+      config:
+      - name: Port-Channel200
+        mode: trunk
+  - name: idf port channel
+    arista.eos.eos_lag_interfaces:
+      config:
+      - name: Port-Channel200
+        members:
+        - member: et11
+          mode: active
+  - name: set idf port channel mlag
+    arista.eos.eos_config:
+      lines: mlag 200
+      parents: interface Port-Channel200
+
+- hosts: clab-Arista-MLAG-Lab01-idf-sw01, clab-Arista-MLAG-Lab01-idf-sw02
+  gather_facts: no
+  become: yes
+  become_method: enable
+
+  vars:
+    ansible_connection: network_cli
+    ansible_network_os: arista.eos.eos
+
+  tasks:
+  - name: uplink port channel trunk
+    arista.eos.eos_l2_interfaces:
+      config:
+      - name: Port-Channel15
+        mode: trunk
+  - name: uplink port channel (from mdf)
+    arista.eos.eos_lag_interfaces:
+      config:
+      - name: Port-Channel15
+        members:
+        - member: et9
+          mode: active
+  - name: set mdf port channel mlag
+    arista.eos.eos_config:
+      lines: mlag 15
+      parents: interface Port-Channel15
+
+- hosts: all
+  gather_facts: no
+  become: yes
+  become_method: enable
+
+  vars:
+    ansible_connection: network_cli
+    ansible_network_os: arista.eos.eos
+
+  tasks:
+  - name: save config
+    arista.eos.eos_config:
+      save_when: modified

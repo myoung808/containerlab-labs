@@ -1,0 +1,24 @@
+name: Arista-MLAG-Lab01
+topology:
+  defaults:
+    kind: arista_ceos
+    image: ceos:4.32.6M
+  nodes:
+    mdf-sw01:
+    mdf-sw02:
+    mdf-sw03:
+    idf-sw01:
+    idf-sw02:
+    idf-sw03:
+
+  links:
+  - endpoints: ["mdf-sw01:eth7","mdf-sw02:eth7"]
+  - endpoints: ["mdf-sw01:eth8","mdf-sw02:eth8"]
+  - endpoints: ["mdf-sw01:eth10","mdf-sw03:eth9"]
+  - endpoints: ["mdf-sw02:eth10","mdf-sw03:eth10"]
+  - endpoints: ["idf-sw01:eth7","idf-sw02:eth7"]
+  - endpoints: ["idf-sw01:eth8","idf-sw02:eth8"]
+  - endpoints: ["idf-sw01:eth10","idf-sw03:eth9"]
+  - endpoints: ["idf-sw02:eth10","idf-sw03:eth10"]
+  - endpoints: ["mdf-sw01:eth11","idf-sw01:eth9"]
+  - endpoints: ["mdf-sw02:eth11","idf-sw02:eth9"]
