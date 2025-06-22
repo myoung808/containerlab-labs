@@ -1,1 +1,1 @@
-# containerlab-lab
+# containerlab-labs

@@ -104,7 +104,7 @@
       - domain-id mlag1
       parents: mlag configuration
 
-- hosts: clab-Arista-MLAG-Lab01-idf-sw1, clab-Arista-MLAG-Lab01-idf-sw2
+- hosts: clab-Arista-MLAG-Lab01-idf-sw01, clab-Arista-MLAG-Lab01-idf-sw02
   gather_facts: no
   become: yes
   become_method: enable
